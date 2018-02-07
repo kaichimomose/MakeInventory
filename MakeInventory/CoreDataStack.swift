@@ -45,8 +45,9 @@ public final class CoreDataStack {
         }
     }
     
-    func delete(with stack: CoreDataStack, inventoryID: NSManagedObjectID) {
-        let item = stack.privateContext.object(with: inventoryID)
-        stack.privateContext.delete(item)
+    func delete(with stack: CoreDataStack, viewItem: NSManagedObject) {
+        let itemID = viewItem.objectID
+        let privateItem = stack.privateContext.object(with: itemID)
+        stack.privateContext.delete(privateItem)
     }
 }

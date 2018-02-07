@@ -9,7 +9,11 @@
 import UIKit
 import CoreData
 
-class InventoriesViewController: UIViewController {
+protocol UpdateDelegate: class {
+    func updateViewContext(item: Inventory)
+}
+
+class InventoriesViewController: UIViewController, UpdateDelegate  {
     let stack = CoreDataStack.instance
     
     @IBOutlet weak var tableView: UITableView!
@@ -23,30 +27,26 @@ class InventoriesViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        print("")
-        
-        print("-----Before fetch count: \(self.inventories.count)----")
-        
         
         let fetch = NSFetchRequest<Inventory>(entityName: "Inventory")
         do {
             let result = try stack.viewContext.fetch(fetch)
             self.inventories = result
             self.tableView.reloadData()
-            print("Did fetch")
             
         }catch let error {
             print(error)
         }
         
-        self.stack.viewContext.refreshAllObjects()
-        print("-----after fetch count: \(self.inventories.count)----")
-        
+    }
+    
+    func updateViewContext(item: Inventory) {
+        self.stack.viewContext.refresh(item, mergeChanges: true)
     }
 }
 
 
-extension InventoriesViewController: UITableViewDataSource {
+extension InventoriesViewController: UITableViewDataSource{
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
@@ -71,16 +71,17 @@ extension InventoriesViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let row = indexPath.row
-        let item = inventories[row]
+        let viewItem = inventories[row]
         let addInventoryVC = storyboard?.instantiateViewController(withIdentifier: "AddInventoryViewController") as! AddInventoryViewController
-        addInventoryVC.inventory = item
+        addInventoryVC.inventory = viewItem
+        addInventoryVC.delegate = self
         self.navigationController?.pushViewController(addInventoryVC, animated: true)
     }
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         let row = indexPath.row
         if editingStyle == .delete {
-            stack.delete(with: self.stack, inventoryID: inventories[row].objectID)
+            stack.delete(with: self.stack, viewItem: inventories[row])
             inventories.remove(at: row)
             stack.saveTo(context: stack.privateContext)
             tableView.deleteRows(at: [indexPath], with: UITableViewRowAnimation.fade)

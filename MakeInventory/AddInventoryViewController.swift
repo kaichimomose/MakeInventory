@@ -13,6 +13,8 @@ class AddInventoryViewController: UIViewController {
     
     var inventory: Inventory?
     
+    weak var delegate: UpdateDelegate?
+    
     @IBOutlet weak var inventoryNameField: UITextField!
     @IBOutlet weak var inventoryQuantityField: UITextField!
     
@@ -34,6 +36,9 @@ class AddInventoryViewController: UIViewController {
             backgroundEntity.quantity = quantity
             backgroundEntity.date = Date()
             
+            coreDataStack.saveTo(context: coreDataStack.privateContext)
+            delegate?.updateViewContext(item: inventory)
+//            self.coreDataStack.viewContext.refresh(inventory, mergeChanges: true)
         } else {
             
             let inv = Inventory(
@@ -43,10 +48,10 @@ class AddInventoryViewController: UIViewController {
             inv.name = name
             inv.quantity = quantity
             inv.date = Date()
+            
+            coreDataStack.saveTo(context: coreDataStack.privateContext)
         }
-        
-        coreDataStack.saveTo(context: coreDataStack.privateContext)
-        
+
         self.navigationController?.popViewController(animated: true)
     }
     
